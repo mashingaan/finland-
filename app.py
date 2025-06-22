@@ -6,7 +6,16 @@ from plotly.subplots import make_subplots
 import pandas as pd
 import json
 
-
+# Функция для форматирования чисел
+def fmt_ru(v):
+    if pd.isna(v):
+        return ""
+    abs_v = abs(v)
+    sign = "-" if v < 0 else ""
+    if abs_v >= 1:
+        return f"{sign}{abs_v:,.1f} млрд USD".replace(",", " ")
+    else:
+        return f"{sign}{abs_v*1_000:,.1f} млн USD".replace(",", " ")
 
 # Загрузка данных
 with open("dashboard_data.json", "r", encoding="utf-8") as f:
@@ -37,20 +46,6 @@ div_germany = html.Div([
         ], style={"width": "30%", "display": "inline-block"}),
     ], style={"display": "flex", "justifyContent": "space-between"})
 ], style={"backgroundColor": "#ffffff", "padding": "20px", "borderRadius": "8px", "marginBottom": "20px"})
-
-
-# Функция для форматирования чисел
-def fmt_ru(v):
-    if pd.isna(v):
-        return ""
-    abs_v = abs(v)
-    sign = "-" if v < 0 else ""
-    if abs_v >= 1:
-        return f"{sign}{abs_v:,.1f} млрд USD".replace(",", " ")
-    else:
-        return f"{sign}{abs_v*1_000:,.1f} млн USD".replace(",", " ")
-
-
 
 # Данные по ключевому партнёру Германии (за 5 лет)
 df_partners = pd.DataFrame(data["top_partner_countries"])
