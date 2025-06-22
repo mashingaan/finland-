@@ -4,9 +4,14 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 import json
+from pathlib import Path
+
+# Path to dashboard data relative to this script so the app
+# can be started from any directory
+dashboard_file = Path(__file__).resolve().parent / "dashboard_data.json"
 
 # Загрузка данных
-with open("dashboard_data.json", "r", encoding="utf-8") as f:
+with open(dashboard_file, "r", encoding="utf-8") as f:
     data = json.load(f)
 
 # Функция для форматирования чисел
