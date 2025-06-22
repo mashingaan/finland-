@@ -2,6 +2,10 @@ import pandas as pd
 import sqlite3
 import io
 import json
+from pathlib import Path
+
+# Path to dashboard data file relative to this script
+dashboard_file = Path(__file__).resolve().parent / "dashboard_data.json"
 
 # Load data from CSVs
 commodities_df = pd.read_csv("upload/commodities.csv")
@@ -136,7 +140,7 @@ else:
     dashboard_data["declining_partners"] = []
 
 # Save processed data to a JSON file
-with open("dashboard_data.json", "w", encoding="utf-8") as f:
+with open(dashboard_file, "w", encoding="utf-8") as f:
     json.dump(dashboard_data, f, ensure_ascii=False, indent=4)
 
 print("Data prepared and saved to dashboard_data.json")
