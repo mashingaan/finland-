@@ -2,6 +2,7 @@ import pandas as pd
 import sqlite3
 import io
 import json
+from pathlib import Path
 
 # Load data from CSVs
 commodities_df = pd.read_csv("upload/commodities.csv")
@@ -83,14 +84,17 @@ growth_data = {
     "import_growth": imp_growth.to_dict(orient="records")
 }
 
+# Path to dashboard_data.json in the repository root
+dashboard_file = Path(__file__).resolve().parent / "dashboard_data.json"
+
 # Load existing dashboard data and add growth data
-with open("/home/ubuntu/finland_trade_dashboard/dashboard_data.json", "r", encoding="utf-8") as f:
+with open(dashboard_file, "r", encoding="utf-8") as f:
     dashboard_data = json.load(f)
 
 dashboard_data.update(growth_data)
 
 # Save updated data
-with open("/home/ubuntu/finland_trade_dashboard/dashboard_data.json", "w", encoding="utf-8") as f:
+with open(dashboard_file, "w", encoding="utf-8") as f:
     json.dump(dashboard_data, f, ensure_ascii=False, indent=4)
 
 print("\nGrowth data added to dashboard_data.json")
