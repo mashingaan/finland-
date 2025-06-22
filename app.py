@@ -318,9 +318,11 @@ def update_economic_sectors(dummy_input):
 )
 def update_trade_geography(dummy_input):
     df = pd.DataFrame(data["trade_geography"])
-    
+
     # Исключаем неизвестные регионы
     df_filtered = df[df["world_part"] != "Неизвестно"].copy()
+    df_filtered["export_pct"] = df_filtered["export_share"] * 100
+    df_filtered["import_pct"] = df_filtered["import_share"] * 100
     df_filtered["X_bln"] = df_filtered["X"] / 1_000_000_000
     df_filtered["M_bln"] = df_filtered["M"] / 1_000_000_000
     
@@ -329,31 +331,31 @@ def update_trade_geography(dummy_input):
     # Экспорт
     fig.add_trace(go.Bar(
         x=df_filtered["world_part"],
-        y=df_filtered["X_bln"],
+        y=df_filtered["export_pct"],
         name="Экспорт",
         marker_color="#27ae60",
-        text=[fmt_ru(val) for val in df_filtered["X_bln"]],
+        text=[f"{val:.1f}%" for val in df_filtered["export_pct"]],
         textposition="inside",
-        hovertemplate="%{x}<br>Экспорт: %{customdata}<extra></extra>",
+        hovertemplate="%{x}<br>Экспорт: %{customdata}<br>Доля: %{text}<extra></extra>",
         customdata=[fmt_ru(val) for val in df_filtered["X_bln"]]
     ))
     
     # Импорт
     fig.add_trace(go.Bar(
         x=df_filtered["world_part"],
-        y=df_filtered["M_bln"],
+        y=df_filtered["import_pct"],
         name="Импорт",
         marker_color="#e74c3c",
-        text=[fmt_ru(val) for val in df_filtered["M_bln"]],
+        text=[f"{val:.1f}%" for val in df_filtered["import_pct"]],
         textposition="inside",
-        hovertemplate="%{x}<br>Импорт: %{customdata}<extra></extra>",
+        hovertemplate="%{x}<br>Импорт: %{customdata}<br>Доля: %{text}<extra></extra>",
         customdata=[fmt_ru(val) for val in df_filtered["M_bln"]]
     ))
     
     fig.update_layout(
-        title="Объёмы торговли по регионам мира",
+        title="Доля торговли по регионам мира",
         xaxis_title="Регион",
-        yaxis_title="Объём торговли (млрд USD)",
+        yaxis_title="Доля в торговле (%)",
         barmode="group",
         height=400,
         font=dict(family="Arial", size=12),
@@ -430,8 +432,9 @@ def update_russia_trade(dummy_input):
         return fig
 
     df["year"] = df["year"].astype(int) # Ensure years are integers
-    df["X_mln"] = df["X"] / 1_000_000 # Convert to millions for Russia chart
-    df["M_mln"] = df["M"] / 1_000_000 # Convert to millions for Russia chart
+    df["X_mln"] = df["X"] / 1_000_000  # Convert to millions
+    df["M_mln"] = df["M"] / 1_000_000
+    df["balance_mln"] = df["balance"] / 1_000_000 if "balance" in df.columns else (df["X"] - df["M"]) / 1_000_000
 
     fig = go.Figure()
     
@@ -459,6 +462,18 @@ def update_russia_trade(dummy_input):
         customdata=[fmt_ru(val / 1_000) for val in df["M_mln"]] # Convert to billions for fmt_ru
     ))
     
+    # Сальдо
+    fig.add_trace(go.Scatter(
+        x=df["year"],
+        y=df["balance_mln"],
+        mode="lines+markers",
+        name="Сальдо",
+        line=dict(color="#3498db", width=3),
+        marker=dict(size=6),
+        hovertemplate="Год: %{x}<br>Сальдо: %{customdata}<extra></extra>",
+        customdata=[fmt_ru(val / 1_000) for val in df["balance_mln"]]
+    ))
+
     fig.update_layout(
         title="Торговля с Россией (5 лет)",
         xaxis_title="Год",
