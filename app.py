@@ -46,6 +46,32 @@ def fmt_ru(v):
     else:
         return f"{sign}{abs_v*1_000:,.1f} млн USD".replace(",", " ")
 
+# Данные по ключевому партнёру Германии (за 5 лет)
+df_partners = pd.DataFrame(data["top_partner_countries"])
+germany_row = df_partners[df_partners["country_name"] == "Германия"].iloc[0]
+turnover_bln = germany_row.get("turnover_bln", (germany_row["X"] + germany_row["M"]) / 1_000_000_000)
+export_bln = germany_row.get("export_bln", germany_row["X"] / 1_000_000_000)
+import_bln = germany_row.get("import_bln", germany_row["M"] / 1_000_000_000)
+
+# Блок с показателями торговли с Германией
+div_germany = html.Div([
+    html.H3("Ключевой партнёр — Германия", style={"marginBottom": "10px"}),
+    html.Div([
+        html.Div([
+            html.H4("Товарооборот"),
+            html.P(f"{fmt_ru(turnover_bln)}")
+        ], style={"width": "30%", "display": "inline-block"}),
+        html.Div([
+            html.H4("Экспорт"),
+            html.P(f"{fmt_ru(export_bln)}")
+        ], style={"width": "30%", "display": "inline-block"}),
+        html.Div([
+            html.H4("Импорт"),
+            html.P(f"{fmt_ru(import_bln)}")
+        ], style={"width": "30%", "display": "inline-block"}),
+    ], style={"display": "flex", "justifyContent": "space-between"})
+], style={"backgroundColor": "#ffffff", "padding": "20px", "borderRadius": "8px", "marginBottom": "20px"})
+
 # Инициализация приложения Dash
 app = dash.Dash(__name__)
 server = app.server
