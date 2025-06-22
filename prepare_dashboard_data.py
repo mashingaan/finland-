@@ -67,6 +67,8 @@ dashboard_data["economic_sectors"] = sector_trade.reset_index().to_dict(orient="
 
 # 4. Trade Geography
 regional_trade = trade_df.groupby(["world_part", "flowCode"])["primaryValue"].sum().unstack().fillna(0)
+regional_trade["export_share"] = regional_trade["X"] / regional_trade["X"].sum()
+regional_trade["import_share"] = regional_trade["M"] / regional_trade["M"].sum()
 dashboard_data["trade_geography"] = regional_trade.reset_index().to_dict(orient="records")
 
 # 5. Main Partner Countries (TOP-10 by total trade)
@@ -75,6 +77,12 @@ five_years_ago = latest_year - 4
 recent_partner_trade = trade_df[trade_df["year"] >= five_years_ago]
 partner_total_trade = recent_partner_trade.groupby("country_name")["primaryValue"].sum().nlargest(10)
 dashboard_data["top_partner_countries"] = partner_total_trade.reset_index().to_dict(orient="records")
+
+# 6. Trade with Russian Federation (last 5 years)
+russia_trade = trade_df[(trade_df["partnerCode"] == 643) | (trade_df["country_name"].isin(["Россия", "Российская Федерация", "Russian Federation"]))]
+russia_trade_dynamics = russia_trade[russia_trade["year"] >= five_years_ago].groupby(["year", "flowCode"])["primaryValue"].sum().unstack().fillna(0)
+russia_trade_dynamics["balance"] = russia_trade_dynamics["X"] - russia_trade_dynamics["M"]
+dashboard_data["russia_trade_dynamics"] = russia_trade_dynamics.reset_index().to_dict(orient="records")
 
 # Filters data
 dashboard_data["years"] = sorted(trade_df["year"].unique().tolist())
