@@ -9,6 +9,32 @@ import json
 with open("dashboard_data.json", "r", encoding="utf-8") as f:
     data = json.load(f)
 
+# Данные по ключевому партнёру Германии (за 5 лет)
+df_partners = pd.DataFrame(data["top_partner_countries"])
+germany_row = df_partners[df_partners["country_name"] == "Германия"].iloc[0]
+turnover_bln = germany_row.get("turnover_bln", (germany_row["X"] + germany_row["M"]) / 1_000_000_000)
+export_bln = germany_row.get("export_bln", germany_row["X"] / 1_000_000_000)
+import_bln = germany_row.get("import_bln", germany_row["M"] / 1_000_000_000)
+
+# Блок с показателями торговли с Германией
+div_germany = html.Div([
+    html.H3("Ключевой партнёр — Германия", style={"marginBottom": "10px"}),
+    html.Div([
+        html.Div([
+            html.H4("Товарооборот"),
+            html.P(f"{fmt_ru(turnover_bln)}")
+        ], style={"width": "30%", "display": "inline-block"}),
+        html.Div([
+            html.H4("Экспорт"),
+            html.P(f"{fmt_ru(export_bln)}")
+        ], style={"width": "30%", "display": "inline-block"}),
+        html.Div([
+            html.H4("Импорт"),
+            html.P(f"{fmt_ru(import_bln)}")
+        ], style={"width": "30%", "display": "inline-block"}),
+    ], style={"display": "flex", "justifyContent": "space-between"})
+], style={"backgroundColor": "#ffffff", "padding": "20px", "borderRadius": "8px", "marginBottom": "20px"})
+
 # Функция для форматирования чисел
 def fmt_ru(v):
     if pd.isna(v):
@@ -78,8 +104,9 @@ app.layout = html.Div([
         # ТОП-10 стран-партнёров
         html.Div([
             html.H3("ТОП-10 стран-партнёров (5 лет)", style={"color": "#2c3e50", "marginBottom": "15px"}),
+            div_germany,
             dcc.Graph(id="top-countries-chart")
-        ], style={"width": "48%", "display": "inline-block", "backgroundColor": "#ffffff", 
+        ], style={"width": "48%", "display": "inline-block", "backgroundColor": "#ffffff",
                   "padding": "20px", "borderRadius": "8px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"}),
         
         # Торговля с Россией
@@ -373,8 +400,13 @@ def update_trade_geography(dummy_input):
     Input("top-countries-chart", "id") # Dummy input
 )
 def update_top_countries(dummy_input):
-    df = pd.DataFrame(data["top_partner_countries"])
-    
+    df_all = pd.DataFrame(data["top_partner_countries"])
+    germany_row = df_all[df_all["country_name"] == "Германия"].iloc[0]
+    turnover_bln = germany_row["turnover_bln"]
+    export_bln = germany_row.get("export_bln", germany_row["X"] / 1_000_000_000)
+    import_bln = germany_row.get("import_bln", germany_row["M"] / 1_000_000_000)
+    df = df_all
+
     # Use the pre-calculated balance_bln and turnover_bln from data_preparation.py
     colors = ["#27ae60" if bal >= 0 else "#e74c3c" for bal in df["balance_bln"]]
     
