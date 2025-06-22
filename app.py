@@ -2,8 +2,11 @@ import dash
 from dash import dcc, html, Input, Output, callback
 import plotly.graph_objects as go
 import plotly.express as px
+from plotly.subplots import make_subplots
 import pandas as pd
 import json
+
+
 
 # Загрузка данных
 with open("dashboard_data.json", "r", encoding="utf-8") as f:
@@ -35,6 +38,7 @@ div_germany = html.Div([
     ], style={"display": "flex", "justifyContent": "space-between"})
 ], style={"backgroundColor": "#ffffff", "padding": "20px", "borderRadius": "8px", "marginBottom": "20px"})
 
+
 # Функция для форматирования чисел
 def fmt_ru(v):
     if pd.isna(v):
@@ -46,10 +50,20 @@ def fmt_ru(v):
     else:
         return f"{sign}{abs_v*1_000:,.1f} млн USD".replace(",", " ")
 
+
+
+# Данные по ключевому партнёру Германии (за 5 лет)
+df_partners = pd.DataFrame(data["top_partner_countries"])
+germany_row = df_partners[df_partners["country_name"] == "Германия"].iloc[0]
+turnover_bln = germany_row.get(
+    "turnover_bln", (germany_row["X"] + germany_row["M"]) / 1_000_000_000
+)
+
 # Данные по ключевому партнёру Германии (за 5 лет)
 df_partners = pd.DataFrame(data["top_partner_countries"])
 germany_row = df_partners[df_partners["country_name"] == "Германия"].iloc[0]
 turnover_bln = germany_row.get("turnover_bln", (germany_row["X"] + germany_row["M"]) / 1_000_000_000)
+
 export_bln = germany_row.get("export_bln", germany_row["X"] / 1_000_000_000)
 import_bln = germany_row.get("import_bln", germany_row["M"] / 1_000_000_000)
 
@@ -333,35 +347,46 @@ def update_top_commodities_import(dummy_input):
 )
 def update_economic_sectors(dummy_input):
     df = pd.DataFrame(data["economic_sectors"])
-    
-    # Фильтруем только секторы с экспортом > 0
-    df_filtered = df[df["X"] > 0].copy()
-    df_filtered["export_share_pct"] = df_filtered["export_share"] * 100
-    df_filtered["X_bln"] = df_filtered["X"] / 1_000_000_000
-    
+
+    # Переводим значения в млрд и считаем доли
+    df["X_bln"] = df["X"] / 1_000_000_000
+    df["M_bln"] = df["M"] / 1_000_000_000
+    total_export = df["X_bln"].sum()
+    total_import = df["M_bln"].sum()
+    df["export_pct"] = df["X_bln"] / total_export * 100
+    df["import_pct"] = df["M_bln"] / total_import * 100
+
     # Сокращаем названия секторов
-    df_filtered["short_sector"] = df_filtered["sector"].apply(lambda x: (x[:25] + "...") if len(x) > 25 else x)
-    
-    fig = go.Figure(go.Pie(
-        labels=df_filtered["short_sector"],
-        values=df_filtered["export_share_pct"],
+    df["short_sector"] = df["sector"].apply(lambda x: (x[:25] + "...") if len(x) > 25 else x)
+
+    fig = make_subplots(rows=1, cols=2, specs=[[{"type": "domain"}, {"type": "domain"}]],
+                        subplot_titles=("Доля экспорта по секторам", "Доля импорта по секторам"))
+
+    fig.add_trace(go.Pie(
+        labels=df["short_sector"],
+        values=df["export_pct"],
         hole=0.4,
-        textinfo="label+percent",
-        textposition="outside",
-        textfont=dict(size=10),
-        hovertemplate="%{label}<br>Доля: %{value:.1f}%<br>Объём: %{customdata}<extra></extra>",
-        customdata=[fmt_ru(val) for val in df_filtered["X_bln"]]
-    ))
-    
+        name="Экспорт",
+        hovertemplate="%{label}<br>%{value:.1f}%<extra></extra>"
+    ), row=1, col=1)
+
+    fig.add_trace(go.Pie(
+        labels=df["short_sector"],
+        values=df["import_pct"],
+        hole=0.4,
+        name="Импорт",
+        hovertemplate="%{label}<br>%{value:.1f}%<extra></extra>"
+    ), row=1, col=2)
+
     fig.update_layout(
-        title="Распределение экспорта по секторам экономики",
         height=500,
-        font=dict(family="Arial", size=10),
+        title_text="Распределение экспорта и импорта по секторам",
         showlegend=False,
-        plot_bgcolor="rgba(0,0,0,0)", # Transparent background
-        paper_bgcolor="rgba(0,0,0,0)" # Transparent background
+        font=dict(family="Arial", size=10),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)"
     )
-    
+
     return fig
 
 # Callback для географии торговли
