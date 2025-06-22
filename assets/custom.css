@@ -1,0 +1,25 @@
+/* Hide any Manus branding or credits */
+.manus-credit {
+    display: none !important;
+}
+
+/* Hide any watermarks */
+.watermark {
+    display: none !important;
+}
+
+/* Hide any footer credits */
+.footer-credit {
+    display: none !important;
+}
+
+/* General styling improvements */
+body {
+    font-family: 'Arial', sans-serif;
+}
+
+/* Ensure no external branding appears */
+[class*="manus"], [id*="manus"], [class*="credit"], [id*="credit"] {
+    display: none !important;
+}
+
