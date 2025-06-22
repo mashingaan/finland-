@@ -24,7 +24,9 @@ with open("dashboard_data.json", "r", encoding="utf-8") as f:
 # Данные по ключевому партнёру Германии (за 5 лет)
 df_partners = pd.DataFrame(data["top_partner_countries"])
 germany_row = df_partners[df_partners["country_name"] == "Германия"].iloc[0]
-turnover_bln = germany_row.get("turnover_bln", (germany_row["X"] + germany_row["M"]) / 1_000_000_000)
+turnover_bln = germany_row.get(
+    "turnover_bln", (germany_row["X"] + germany_row["M"]) / 1_000_000_000
+)
 export_bln = germany_row.get("export_bln", germany_row["X"] / 1_000_000_000)
 import_bln = germany_row.get("import_bln", germany_row["M"] / 1_000_000_000)
 
